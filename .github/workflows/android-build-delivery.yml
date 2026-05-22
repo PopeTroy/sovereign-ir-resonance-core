@@ -1,0 +1,40 @@
+name: Sovereign IR Core Build & Delivery Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  assemble-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Access Codebase Ledger
+      uses: actions/checkout@v4
+
+    - name: Initialize JDK Environment Core
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Grant Wrapper Execution Authorization
+      run: chmod +x gradlew
+
+    - name: Execute Local Structural Diagnostics
+      run: ./gradlew testDebugUnitTest
+
+    - name: Assemble Production Executable Asset Array
+      run: ./gradlew assembleDebug
+      env:
+        NVIDIA_NIM_API_KEY: ${{ secrets.NVIDIA_NIM_API_KEY }}
+        CELSIUS_BRIDGE_TOKEN: ${{ secrets.CELSIUS_BRIDGE_TOKEN }}
+
+    - name: Export Executable Binary Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: sovereign-ir-resonance-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
